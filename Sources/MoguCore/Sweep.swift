@@ -58,7 +58,7 @@ public enum Sweep {
         let lock = NSLock()
         DispatchQueue.concurrentPerform(iterations: proposals.count) { index in
             guard !cancellation.isCancelled else { return }
-            guard let item = evaluate(proposals[index], cancellation: cancellation) else { lock.lock(); result.skipped += 1; lock.unlock(); return }
+            guard let item = evaluate(proposals[index], home: home, cancellation: cancellation) else { lock.lock(); result.skipped += 1; lock.unlock(); return }
             lock.lock(); result.items.append(item); lock.unlock()
             found(item)
         }
@@ -67,11 +67,11 @@ public enum Sweep {
         return result
     }
 
-    static func evaluate(_ proposal: Proposal, cancellation: Cancellation) -> SweepItem? {
+    static func evaluate(_ proposal: Proposal, home: URL, cancellation: Cancellation) -> SweepItem? {
         var proposal = proposal
         guard let stamp = try? FileStamp.read(proposal.url), stamp.isDirectory || stamp.isRegular else { return nil }
         if proposal.buildOutput {
-            switch Git.state(of: proposal.url) {
+            switch Git.state(of: proposal.url, home: home) {
             case .tracked: return nil
             case .untracked: break
             case .unknown:
@@ -397,11 +397,11 @@ public enum Sweep {
 
 enum Git {
     enum State { case tracked, untracked, unknown }
-    /// Whether Git tracks anything inside `url`. Folders outside a repository are `unknown`.
-    static func state(of url: URL) -> State {
+    /// Whether Git tracks anything inside `url`. Folders outside a repository within `home` are `unknown`.
+    static func state(of url: URL, home: URL) -> State {
         let parent = url.deletingLastPathComponent()
         var probe = parent, inRepo = false
-        while probe.path != "/" && !probe.path.isEmpty {
+        while probe.path == home.path || Safety.isDescendant(probe, of: home) {
             var s = stat()
             if lstat(probe.appendingPathComponent(".git").path, &s) == 0 { inRepo = true; break }
             probe.deleteLastPathComponent()
@@ -411,7 +411,14 @@ enum Git {
         guard inRepo, tools.contains(where: FileManager.default.isExecutableFile(atPath:)) else { return .unknown }
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/git")
-        process.arguments = ["-C", parent.path, "ls-files", "-z", "--", url.lastPathComponent]
+        // A repository's own .git/config can name programs to run (core.fsmonitor and similar).
+        // Command-line settings take precedence, so switch those off for every scan.
+        process.arguments = ["-c", "core.fsmonitor=false", "-c", "core.untrackedCache=false", "-c", "core.hooksPath=/dev/null",
+                             "-C", parent.path, "ls-files", "-z", "--", url.lastPathComponent]
+        var environment = ["PATH": "/usr/bin:/bin", "GIT_OPTIONAL_LOCKS": "0", "GIT_TERMINAL_PROMPT": "0", "GIT_CONFIG_NOSYSTEM": "1"]
+        environment["HOME"] = ProcessInfo.processInfo.environment["HOME"]
+        environment["GIT_CEILING_DIRECTORIES"] = home.deletingLastPathComponent().path
+        process.environment = environment
         let pipe = Pipe()
         process.standardOutput = pipe; process.standardError = FileHandle.nullDevice
         do { try process.run() } catch { return .unknown }

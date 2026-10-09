@@ -84,6 +84,20 @@ final class SafetyTests: XCTestCase {
         XCTAssertEqual(item("Developer/loose/build", in: items)?.level, .review, "Without Git the folder needs review")
     }
 
+    func testRepositoryConfigCannotRunCommands() throws {
+        guard ["/Library/Developer/CommandLineTools/usr/bin/git", "/Applications/Xcode.app/Contents/Developer/usr/bin/git"].contains(where: fm.isExecutableFile(atPath:)) else { throw XCTSkip("git is not installed") }
+        let repo = try folder("Developer/evil")
+        try git(repo, "init", "-q")
+        let marker = root.appendingPathComponent("ran")
+        let hook = try file("hook.sh")
+        try "#!/bin/sh\ntouch '\(marker.path)'\n".write(to: hook, atomically: true, encoding: .utf8)
+        try fm.setAttributes([.posixPermissions: 0o755], ofItemAtPath: hook.path)
+        try git(repo, "config", "core.fsmonitor", hook.path)
+        try file("Developer/evil/build/output.bin")
+        _ = scan()
+        XCTAssertFalse(fm.fileExists(atPath: marker.path), "A repository's own config must never run commands during a scan")
+    }
+
     func testTrashAndDeleteModesRecordHistory() throws {
         try file("Library/Caches/AppA/a.bin"); try file("Library/Caches/AppB/b.bin")
         let items = scan()
