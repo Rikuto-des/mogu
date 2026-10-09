@@ -19,6 +19,10 @@ final class AppModel {
     var result = CleanupResult()
     var lastMode = RemovalMode.trash
     var lastScan: Date?
+    /// A background scan that keeps the current list until the newer one is ready.
+    var refreshing = false
+    var refreshToken = Cancellation()
+    var refreshScheduler: NSBackgroundActivityScheduler?
     var cancellation = Cancellation()
     let worker = DispatchQueue(label: "jp.rikuto.mogu.files", qos: .userInitiated)
     let dataDirectory: URL
@@ -57,8 +61,8 @@ final class AppModel {
         guard !addedProjectRoots.contains(where: { $0.standardizedFileURL.path == path }) else { return }
         addedProjectRoots.append(url.standardizedFileURL)
     }
-    /// The list is out of date once the places change; the next time the menu opens it is scanned again.
-    func locationsChanged() { lastScan = nil; notify() }
+    /// The list is out of date once the places change, so it is refreshed in the background.
+    func locationsChanged() { lastScan = nil; notify(); refresh() }
     var runningApps: Set<String> { Set(NSWorkspace.shared.runningApplications.compactMap(\.bundleIdentifier)) }
     var selectedItems: [SweepItem] { items.filter { selected.contains($0.id) } }
     var selectedBytes: Int64 { selectedItems.reduce(0) { $0 + $1.bytes } }
@@ -77,14 +81,53 @@ final class AppModel {
         NSApp.activate(ignoringOtherApps: true); alert.runModal()
     }
 
-    /// Called whenever the menu opens: the list is always ready without choosing folders.
+    /// Called whenever the menu opens. Scanning happens in the background, so the list is normally ready.
     func prepare() {
         guard !isBusy else { return }
         if phase == .done || phase == .confirming { phase = .ready }
-        if lastScan.map({ Date().timeIntervalSince($0) > 600 }) ?? true { scan() } else { notify() }
+        if phase == .idle { scan() } else { notify(); if lastScan == nil { refresh() } }
     }
+    /// Checks again every half hour while Mogu runs, at a time that suits the system.
+    func startBackgroundRefresh() {
+        let scheduler = NSBackgroundActivityScheduler(identifier: (Bundle.main.bundleIdentifier ?? "jp.rikuto.mogu") + ".refresh")
+        scheduler.repeats = true; scheduler.interval = 30 * 60; scheduler.tolerance = 5 * 60; scheduler.qualityOfService = .utility
+        scheduler.schedule { [weak self] completion in
+            DispatchQueue.main.async {
+                // Never swap the list while the user is looking at it.
+                let open = (NSApp.delegate as? AppDelegate)?.popover.isShown == true
+                if let self, !open, self.lastScan.map({ Date().timeIntervalSince($0) > 20 * 60 }) ?? true { self.refresh() }
+                completion(.finished)
+            }
+        }
+        refreshScheduler = scheduler
+    }
+    func refresh() {
+        guard phase == .ready, !refreshing else { return }
+        refreshing = true; refreshToken = Cancellation(); notify()
+        let token = refreshToken, home = userHome, running = runningApps, roots = projectRoots
+        worker.async(qos: .utility, flags: .enforceQoS) {
+            let result = Sweep.scan(home: home, projectRoots: roots, cancellation: token)
+            DispatchQueue.main.async {
+                guard self.refreshToken === token else { return }
+                self.refreshing = false
+                // Something else started (removal, a full scan); try again later.
+                guard !result.cancelled, self.phase == .ready else { self.lastScan = nil; self.notify(); return }
+                // Keep the user's choices for items that are still there; new items get the usual default.
+                let before = Dictionary(self.items.map { ($0.id, self.selected.contains($0.id)) }, uniquingKeysWith: { a, _ in a })
+                self.items = result.items
+                self.selected = Set(result.items.filter { before[$0.id] ?? ($0.level == .safe && !$0.ownerIsRunning(running)) }.map(\.id))
+                self.lastScan = self.projectRoots == roots ? Date() : nil
+                self.status = self.items.isEmpty ? "消していいものは見つかりませんでした。" : ""
+                self.notify()
+                if self.lastScan == nil { self.refresh() }
+            }
+        }
+    }
+    /// The cancelled refresh finishes quietly; its result is dropped.
+    func cancelRefresh() { if refreshing { refreshToken.cancel(); refreshToken = Cancellation(); refreshing = false } }
     func scan() {
         guard !isBusy else { return }
+        cancelRefresh()
         items = []; selected = []; progress = 0; phase = .scanning; cancellation = Cancellation()
         status = "調べています…"; notify()
         let token = cancellation, home = userHome, running = runningApps, roots = projectRoots
@@ -101,10 +144,11 @@ final class AppModel {
                 guard self.cancellation === token else { return }
                 self.items = result.items
                 self.selected = self.selected.intersection(result.items.map(\.id))
-                // If the places changed during the scan, scan again the next time the menu opens.
+                // If the places changed during the scan, scan them again right away.
                 self.phase = .ready; self.lastScan = self.projectRoots == roots ? Date() : nil
                 self.status = result.cancelled ? "途中で止めました。見つかった分だけ表示しています。" : self.items.isEmpty ? "消していいものは見つかりませんでした。" : ""
                 self.notify()
+                if self.lastScan == nil, !result.cancelled { self.refresh() }
             }
         }
     }
@@ -144,6 +188,7 @@ final class AppModel {
         guard phase == .confirming else { return }
         let list = selectedItems, mode = self.mode, home = userHome
         guard !list.isEmpty else { phase = .ready; notify(); return }
+        cancelRefresh()
         phase = .working; lastMode = mode; progress = 0; movedBytes = 0; doneCount = 0
         operationBytes = list.reduce(0) { $0 + $1.bytes }; operationCount = list.count; cancellation = Cancellation()
         notify()
@@ -192,7 +237,7 @@ final class AppModel {
         guard a.runModal() == .alertFirstButtonReturn else { return }
         do {
             try Cleanup.restore(entry, source: source, store: history)
-            lastScan = nil; phase = phase == .done ? .ready : phase; notify(); showHistory()
+            lastScan = nil; phase = phase == .done ? .ready : phase; notify(); refresh(); showHistory()
         } catch { alert("元に戻せませんでした", error.localizedDescription + "\n\nゴミ箱を空にしたものは戻せません。ゴミ箱に残っている場合は、Finderで項目を右クリックして「戻す」を選んでください。") }
     }
 }

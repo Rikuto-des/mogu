@@ -21,6 +21,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if Bundle.main.object(forInfoDictionaryKey: "MoguPreview") as? Bool == true {
             NSApp.setActivationPolicy(.regular)
         }
+        // Start looking right away, so the list is ready by the time the menu is opened.
+        model.scan(); model.startBackgroundRefresh()
         DispatchQueue.main.asyncAfter(deadline: .now()+0.4) { self.show() }
     }
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool { show(); return true }

@@ -178,6 +178,7 @@ final class PopoverController: NSViewController {
         switch phase {
         case .idle: subtitle.stringValue = model.status
         case .scanning: subtitle.stringValue = "調べています… \(model.items.count)件見つかりました。\nまだ何も変更していません。"
+        case .ready where model.refreshing: subtitle.stringValue = free + "（このMacの残り）\n最新の状態に更新しています…"
         case .ready where !model.status.isEmpty: subtitle.stringValue = model.status + (free.isEmpty ? "" : "\n" + free)
         case .ready, .confirming: subtitle.stringValue = free + "（このMacの残り）\n選んだものだけを" + (model.mode == .trash ? "ゴミ箱へ移します。" : "完全に削除します。")
         case .working: subtitle.stringValue = "\(model.doneCount) / \(model.operationCount)件 完了"
