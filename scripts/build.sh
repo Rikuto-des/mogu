@@ -24,5 +24,9 @@ if [[ "${1:-}" == "--preview" ]]; then
   plutil -replace CFBundleName -string 'Mogu Preview' "$APP_DIR/Contents/Info.plist"
   plutil -insert MoguPreview -bool true "$APP_DIR/Contents/Info.plist"
 fi
-codesign --force --sign - --options runtime --entitlements "$PROJECT_DIR/Mogu.entitlements" "$APP_DIR"
+# Ad-hoc by default; set MOGU_SIGN_IDENTITY to sign with a Developer ID for distribution.
+IDENTITY="${MOGU_SIGN_IDENTITY:--}"
+TIMESTAMP=()
+if [[ "$IDENTITY" != "-" ]]; then TIMESTAMP=(--timestamp); fi
+codesign --force --sign "$IDENTITY" "${TIMESTAMP[@]}" --options runtime --entitlements "$PROJECT_DIR/Mogu.entitlements" "$APP_DIR"
 echo "$APP_DIR"

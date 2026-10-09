@@ -16,10 +16,7 @@ macOS 13以降（Apple Silicon / Intel）
 ## インストール
 
 1. [Releases](../../releases) から `Mogu-x.y.z-macOS.zip` をダウンロードして展開し、`Mogu.app` を「アプリケーション」フォルダへ移します。
-2. 初回は、Appleの公証を受けていないため「開けません」と表示されます。次のどちらかで開いてください。
-   - 「システム設定」→「プライバシーとセキュリティ」を開き、Moguについての表示の「このまま開く」を押す
-   - ターミナルで `xattr -dr com.apple.quarantine /Applications/Mogu.app` を実行してから開く
-3. メニューバーにワニが出ます。クリックすると一覧が開きます。
+2. メニューバーにワニが出ます。クリックすると一覧が開きます。
 
 ダウンロードフォルダを初めて調べるときは、macOSがアクセスの許可を確認します。許可しない場合、ダウンロードフォルダ以外だけを調べます。
 
@@ -71,7 +68,7 @@ macOS 13以降（Apple Silicon / Intel）
 zsh scripts/build.sh
 ```
 
-`build/Release/Mogu.app`（Universal、アドホック署名）ができます。配布用のzipは `zsh scripts/package.sh` で `build/` に作られます。Xcodeで編集する場合は `Mogu.xcodeproj` を開いてください（定義は `project.yml`）。
+`build/Release/Mogu.app`（Universal、アドホック署名）ができます。配布用のzipは `zsh scripts/package.sh` で `build/` に作られます（Developer ID署名と公証つき。事前に `xcrun notarytool store-credentials mogu-notary` で認証情報を登録しておきます）。Xcodeで編集する場合は `Mogu.xcodeproj` を開いてください（定義は `project.yml`）。
 
 ## テスト
 
