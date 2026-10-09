@@ -24,6 +24,7 @@ final class AppModel {
     let dataDirectory: URL
     let history: HistoryStore
     var historyWindow: NSWindow?
+    var locationsWindow: NSWindow?
     var isBusy: Bool { phase == .scanning || phase == .working }
     let homeOverride: URL?
     var userHome: URL {
@@ -35,6 +36,29 @@ final class AppModel {
         get { RemovalMode(rawValue: UserDefaults.standard.string(forKey: "removalMode") ?? "") ?? .trash }
         set { UserDefaults.standard.set(newValue.rawValue, forKey: "removalMode"); notify() }
     }
+    /// Advanced: usual project folders the user switched off (by name), and folders they added.
+    var skippedProjectRoots: Set<String> {
+        get { Set(UserDefaults.standard.stringArray(forKey: "skippedProjectRoots") ?? []) }
+        set { UserDefaults.standard.set(newValue.sorted(), forKey: "skippedProjectRoots"); locationsChanged() }
+    }
+    var addedProjectRoots: [URL] {
+        get { (UserDefaults.standard.stringArray(forKey: "addedProjectRoots") ?? []).map { URL(fileURLWithPath: $0, isDirectory: true) } }
+        set { UserDefaults.standard.set(newValue.map(\.path), forKey: "addedProjectRoots"); locationsChanged() }
+    }
+    /// Added folders are checked again on every scan, since they may have moved or become links.
+    var projectRoots: [URL] {
+        let home = userHome
+        let usual = Sweep.defaultProjectRoots(home: home).filter { !skippedProjectRoots.contains($0.lastPathComponent) }
+        return usual + addedProjectRoots.filter { (try? Sweep.validateProjectRoot($0, home: home)) != nil }
+    }
+    func addProjectRoot(_ url: URL) throws {
+        try Sweep.validateProjectRoot(url, home: userHome)
+        let path = url.standardizedFileURL.path
+        guard !addedProjectRoots.contains(where: { $0.standardizedFileURL.path == path }) else { return }
+        addedProjectRoots.append(url.standardizedFileURL)
+    }
+    /// The list is out of date once the places change; the next time the menu opens it is scanned again.
+    func locationsChanged() { lastScan = nil; notify() }
     var runningApps: Set<String> { Set(NSWorkspace.shared.runningApplications.compactMap(\.bundleIdentifier)) }
     var selectedItems: [SweepItem] { items.filter { selected.contains($0.id) } }
     var selectedBytes: Int64 { selectedItems.reduce(0) { $0 + $1.bytes } }
@@ -57,15 +81,15 @@ final class AppModel {
     func prepare() {
         guard !isBusy else { return }
         if phase == .done || phase == .confirming { phase = .ready }
-        if phase == .idle || lastScan.map({ Date().timeIntervalSince($0) > 600 }) == true { scan() } else { notify() }
+        if lastScan.map({ Date().timeIntervalSince($0) > 600 }) ?? true { scan() } else { notify() }
     }
     func scan() {
         guard !isBusy else { return }
         items = []; selected = []; progress = 0; phase = .scanning; cancellation = Cancellation()
         status = "調べています…"; notify()
-        let token = cancellation, home = userHome, running = runningApps
+        let token = cancellation, home = userHome, running = runningApps, roots = projectRoots
         worker.async {
-            let result = Sweep.scan(home: home, cancellation: token) { item in
+            let result = Sweep.scan(home: home, projectRoots: roots, cancellation: token) { item in
                 DispatchQueue.main.async {
                     guard self.cancellation === token, !self.items.contains(where: { $0.id == item.id }) else { return }
                     self.items.append(item); self.items.sort { $0.bytes > $1.bytes }
@@ -77,7 +101,8 @@ final class AppModel {
                 guard self.cancellation === token else { return }
                 self.items = result.items
                 self.selected = self.selected.intersection(result.items.map(\.id))
-                self.phase = .ready; self.lastScan = Date()
+                // If the places changed during the scan, scan again the next time the menu opens.
+                self.phase = .ready; self.lastScan = self.projectRoots == roots ? Date() : nil
                 self.status = result.cancelled ? "途中で止めました。見つかった分だけ表示しています。" : self.items.isEmpty ? "消していいものは見つかりませんでした。" : ""
                 self.notify()
             }
@@ -152,6 +177,12 @@ final class AppModel {
         let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 750, height: 580), styleMask: [.titled, .closable], backing: .buffered, defer: false)
         w.title = "Mogu — 整理の履歴"; w.contentViewController = controller; w.isReleasedWhenClosed = false
         historyWindow?.close(); historyWindow = w; w.center(); w.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true)
+    }
+    func showLocations() {
+        (NSApp.delegate as? AppDelegate)?.popover.performClose(nil)
+        let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 560, height: 520), styleMask: [.titled, .closable], backing: .buffered, defer: false)
+        w.title = "Mogu — 調べる場所"; w.contentViewController = LocationsController(model: self); w.isReleasedWhenClosed = false
+        locationsWindow?.close(); locationsWindow = w; w.center(); w.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true)
     }
     func restore(_ entry: HistoryEntry) {
         guard !isBusy else { return }

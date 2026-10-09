@@ -51,9 +51,10 @@ public enum Sweep {
     // MARK: Scan
 
     /// Finds known regenerable folders and files that need review, then measures them.
+    /// `projectRoots` are the folders searched for development projects; nil means the usual ones.
     /// `found` is called from worker threads as each item is measured.
-    public static func scan(home: URL, cancellation: Cancellation, now: Date = Date(), found: (SweepItem) -> Void = { _ in }) -> SweepScanResult {
-        let proposals = discover(home: home, now: now)
+    public static func scan(home: URL, projectRoots: [URL]? = nil, cancellation: Cancellation, now: Date = Date(), found: (SweepItem) -> Void = { _ in }) -> SweepScanResult {
+        let proposals = discover(home: home, now: now, projectRoots: projectRoots ?? defaultProjectRoots(home: home))
         var result = SweepScanResult()
         let lock = NSLock()
         DispatchQueue.concurrentPerform(iterations: proposals.count) { index in
@@ -84,12 +85,12 @@ public enum Sweep {
         return SweepItem(url: proposal.url, title: proposal.title, group: proposal.group, note: proposal.note, level: proposal.level, owners: proposal.owners, ownerName: proposal.ownerName, stamp: stamp, bytes: bytes)
     }
 
-    static func discover(home: URL, now: Date) -> [Proposal] {
+    static func discover(home: URL, now: Date, projectRoots: [URL]) -> [Proposal] {
         var proposals = fixedLocations(home: home)
         proposals += cacheFolders(home: home)
         proposals += codexHistory(home: home, now: now)
         proposals += claudeHistory(home: home, now: now)
-        proposals += projectArtifacts(home: home)
+        proposals += projectArtifacts(roots: projectRoots)
         proposals += downloads(home: home)
         // Never offer the same place twice, or a folder together with something inside it.
         var unique: [Proposal] = []
@@ -203,14 +204,38 @@ public enum Sweep {
 
     static let developmentRoots = ["Developer", "Projects", "projects", "dev", "src", "code", "repos", "GitHub", "workspace"]
 
+    /// The usual project folders that exist in `home`, e.g. ~/Developer.
+    public static func defaultProjectRoots(home: URL) -> [URL] {
+        var seen: Set<String> = []
+        return developmentRoots.map { home.appendingPathComponent($0) }.filter { url in
+            guard let stamp = try? FileStamp.read(url), stamp.isDirectory else { return false }
+            return seen.insert("\(stamp.device):\(stamp.inode)").inserted
+        }
+    }
+
+    /// Checks a folder the user wants searched for projects. Removal only works inside the home folder,
+    /// and Library is left to the fixed rules.
+    public static func validateProjectRoot(_ url: URL, home: URL) throws {
+        try Safety.validateRoot(url)
+        guard Safety.isDescendant(url, of: home) else { throw SafetyError.rejected("ホームフォルダの中のフォルダを選んでください。") }
+        let library = home.appendingPathComponent("Library")
+        guard url.standardizedFileURL.path != library.standardizedFileURL.path, !Safety.isDescendant(url, of: library) else {
+            throw SafetyError.rejected("ライブラリの中は、Moguが決まった場所だけを調べます。")
+        }
+        // Hidden folders hold tools and settings (~/.nvm, ~/.config), not projects to clean.
+        guard !url.standardizedFileURL.pathComponents.dropFirst(home.standardizedFileURL.pathComponents.count).contains(where: { $0.hasPrefix(".") }) else {
+            throw SafetyError.rejected("隠しフォルダの中は選べません。")
+        }
+        if (try? url.resourceValues(forKeys: [.isUbiquitousItemKey]))?.isUbiquitousItem == true { throw SafetyError.rejected("iCloud上のフォルダは選べません。") }
+    }
+
     /// Walks project folders and offers dependency and build output folders.
-    static func projectArtifacts(home: URL, maxDepth: Int = 6, maxDirectories: Int = 60_000) -> [Proposal] {
+    static func projectArtifacts(roots: [URL], maxDepth: Int = 6, maxDirectories: Int = 60_000) -> [Proposal] {
         var result: [Proposal] = []
         var seenRoots: Set<String> = []
-        var visited = 0
-        for name in developmentRoots {
-            let root = home.appendingPathComponent(name)
+        for root in roots {
             guard let stamp = try? FileStamp.read(root), stamp.isDirectory, seenRoots.insert("\(stamp.device):\(stamp.inode)").inserted else { continue }
+            var visited = 0
             var stack: [(URL, Int)] = [(root, 0)]
             while let (directory, depth) = stack.popLast(), visited < maxDirectories {
                 visited += 1
@@ -398,10 +423,11 @@ public enum Sweep {
 enum Git {
     enum State { case tracked, untracked, unknown }
     /// Whether Git tracks anything inside `url`. Folders outside a repository within `home` are `unknown`.
+    /// A repository at home itself (dotfiles) does not count: it says nothing about project folders.
     static func state(of url: URL, home: URL) -> State {
         let parent = url.deletingLastPathComponent()
         var probe = parent, inRepo = false
-        while probe.path == home.path || Safety.isDescendant(probe, of: home) {
+        while Safety.isDescendant(probe, of: home) {
             var s = stat()
             if lstat(probe.appendingPathComponent(".git").path, &s) == 0 { inRepo = true; break }
             probe.deleteLastPathComponent()

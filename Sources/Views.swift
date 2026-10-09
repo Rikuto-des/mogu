@@ -323,6 +323,7 @@ final class PopoverController: NSViewController {
         }
         removal.submenu = sub; menu.addItem(removal)
         add("履歴・元に戻す…", #selector(history))
+        add("調べる場所（上級者向け）…", #selector(locations))
         add("プライバシーと保護対象", #selector(privacy), enabled: true)
         menu.addItem(.separator())
         add("Moguを終了", #selector(quit), enabled: true)
@@ -334,6 +335,7 @@ final class PopoverController: NSViewController {
     }
     @objc func rescan() { model.scan() }
     @objc func history() { model.showHistory() }
+    @objc func locations() { model.showLocations() }
     @objc func privacy() { showPrivacy(model) }
     @objc func quit() { NSApp.terminate(nil) }
 }
@@ -379,6 +381,83 @@ final class HistoryController: NSViewController {
     }
 }
 
+/// Advanced: which folders are searched for development projects (node_modules, build output and so on).
+final class LocationsController: NSViewController {
+    unowned let model: AppModel
+    let content = PaperViewBase(frame: .zero)
+    init(model: AppModel) { self.model = model; super.init(nibName: nil, bundle: nil) }
+    required init?(coder: NSCoder) { fatalError() }
+    override func loadView() {
+        view = PaperView(frame: NSRect(x: 0, y: 0, width: 560, height: 520))
+        place(view, label("調べる場所", size: 23, weight: .semibold), 26, 25, 500, 35)
+        place(view, wrapped("開発プロジェクトの依存パッケージ（node_modules など）やビルド出力を探すフォルダです。アプリのキャッシュ、Codex / Claudeの記録、ダウンロードは、ここに関係なくいつも調べます。", size: 12), 27, 68, 506, 48)
+        let scroll = NSScrollView(frame: NSRect(x: 24, y: 128, width: 512, height: 300)); scroll.hasVerticalScroller = true; scroll.drawsBackground = false
+        scroll.documentView = content; view.addSubview(scroll)
+        place(view, actionButton("フォルダを追加…", target: self, action: #selector(add)), 20, 440, 140, 32)
+        place(view, wrapped("ホームフォルダの中のフォルダを選べます（ライブラリ、隠しフォルダ、iCloud上のフォルダを除く）。変更は、次にメニューを開いたときの調べ直しから反映されます。", size: 10.5), 28, 480, 506, 30)
+        rebuild()
+    }
+
+    func rebuild() {
+        content.subviews.forEach { $0.removeFromSuperview() }
+        let width: CGFloat = 494, home = model.userHome.path
+        func shortPath(_ url: URL) -> String { url.path.hasPrefix(home + "/") ? "~" + url.path.dropFirst(home.count) : url.path }
+        var y: CGFloat = 4
+        place(content, label("いつもの場所", size: 12, weight: .semibold), 4, y, width, 18); y += 24
+        let usual = Sweep.defaultProjectRoots(home: model.userHome), skipped = model.skippedProjectRoots
+        if usual.isEmpty { place(content, label("見つかりませんでした（~/Developer、~/Projects など）", size: 11, color: Palette.secondary), 8, y, width, 18); y += 24 }
+        for root in usual {
+            let check = NSButton(checkboxWithTitle: shortPath(root), target: self, action: #selector(toggleUsual(_:)))
+            check.state = skipped.contains(root.lastPathComponent) ? .off : .on; check.identifier = NSUserInterfaceItemIdentifier(root.lastPathComponent)
+            check.font = .systemFont(ofSize: 12); check.contentTintColor = .black
+            place(content, check, 6, y, width - 12, 22); y += 26
+        }
+        y += 12
+        place(content, label("追加した場所", size: 12, weight: .semibold), 4, y, width, 18); y += 24
+        let added = model.addedProjectRoots
+        if added.isEmpty { place(content, label("まだありません。「フォルダを追加…」から選べます。", size: 11, color: Palette.secondary), 8, y, width, 18); y += 24 }
+        for (index, root) in added.enumerated() {
+            var problem: String?
+            do { try Sweep.validateProjectRoot(root, home: model.userHome) } catch { problem = error.localizedDescription }
+            let path = label(shortPath(root) + (problem == nil ? "" : "（今は調べられません）"), size: 12, color: problem == nil ? Palette.ink : Palette.secondary)
+            path.lineBreakMode = .byTruncatingMiddle; path.toolTip = problem.map { root.path + "\n" + $0 } ?? root.path
+            place(content, path, 8, y + 3, width - 90, 18)
+            let remove = actionButton("外す", target: self, action: #selector(remove(_:))); remove.tag = index
+            remove.setAccessibilityLabel(shortPath(root) + "を外す")
+            place(content, remove, width - 76, y - 2, 72, 28); y += 30
+        }
+        content.frame = NSRect(x: 0, y: 0, width: width, height: y + 8)
+    }
+
+    @objc func toggleUsual(_ sender: NSButton) {
+        guard let name = sender.identifier?.rawValue else { return }
+        var skipped = model.skippedProjectRoots
+        if sender.state == .on { skipped.remove(name) } else { skipped.insert(name) }
+        model.skippedProjectRoots = skipped
+    }
+    @objc func remove(_ sender: NSButton) {
+        var added = model.addedProjectRoots
+        guard added.indices.contains(sender.tag) else { return }
+        added.remove(at: sender.tag); model.addedProjectRoots = added; rebuild()
+    }
+    @objc func add() {
+        guard let window = view.window else { return }
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true; panel.canChooseFiles = false; panel.allowsMultipleSelection = true
+        panel.directoryURL = model.userHome; panel.prompt = "追加"
+        panel.message = "開発プロジェクトを探すフォルダを選んでください。"
+        panel.beginSheetModal(for: window) { [weak self] response in
+            guard let self, response == .OK else { return }
+            var rejected: [String] = []
+            for url in panel.urls {
+                do { try self.model.addProjectRoot(url) } catch { rejected.append("\(url.lastPathComponent): \(error.localizedDescription)") }
+            }
+            self.rebuild()
+            if !rejected.isEmpty { self.model.alert("追加できないフォルダがあります", rejected.joined(separator: "\n")) }
+        }
+    }
+}
+
 func showPrivacy(_ model: AppModel) {
-    model.alert("プライバシーと保護対象", "スキャンと整理はこのMac内だけで行います。ネットワーク通信や利用状況の送信はしません。\n\nMoguは、決まった場所（キャッシュ、開発プロジェクトの依存・ビルド出力、Codex / Claudeの記録、ダウンロード）だけを調べます。フォルダを選ぶ必要はありません。ダウンロードを初めて調べるときは、macOSが許可を確認します。\n\nGitで管理されているフォルダ、Gitリポジトリそのもの、iCloud上の項目、リンク経由の場所は対象にしません。ビルド出力は、Gitで管理されていないと確認できたものだけを「消していい」に入れます。\n\n実行前に、選んだ内容を同じメニューの中で確認します。関連アプリが起動中の項目は見送ります。削除の方法（ゴミ箱へ移す／すぐに完全削除）は「•••」→「削除の方法」で選べます。")
+    model.alert("プライバシーと保護対象", "スキャンと整理はこのMac内だけで行います。ネットワーク通信や利用状況の送信はしません。\n\nMoguは、決まった場所（キャッシュ、開発プロジェクトの依存・ビルド出力、Codex / Claudeの記録、ダウンロード）だけを調べます。フォルダを選ぶ必要はありません。開発プロジェクトを探すフォルダは「•••」→「調べる場所」で変えられます。ダウンロードを初めて調べるときは、macOSが許可を確認します。\n\nGitで管理されているフォルダ、Gitリポジトリそのもの、iCloud上の項目、リンク経由の場所は対象にしません。ビルド出力は、Gitで管理されていないと確認できたものだけを「消していい」に入れます。\n\n実行前に、選んだ内容を同じメニューの中で確認します。関連アプリが起動中の項目は見送ります。削除の方法（ゴミ箱へ移す／すぐに完全削除）は「•••」→「削除の方法」で選べます。")
 }

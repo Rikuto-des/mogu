@@ -62,6 +62,41 @@ final class SafetyTests: XCTestCase {
         XCTAssertTrue(fm.fileExists(atPath: root.appendingPathComponent("Developer/web/node_modules/a/index.js").path), "Scanning never changes files")
     }
 
+    func testChosenProjectRoots() throws {
+        try file("Developer/web/package.json"); try file("Developer/web/node_modules/a/index.js")
+        try file("Desktop/apps/site/package.json"); try file("Desktop/apps/site/node_modules/a/index.js")
+        let defaults = Sweep.scan(home: root, cancellation: Cancellation(), now: october).items
+        XCTAssertNotNil(item("Developer/web/node_modules", in: defaults))
+        XCTAssertNil(item("Desktop/apps/site/node_modules", in: defaults), "Only the usual project folders by default")
+        let apps = root.appendingPathComponent("Desktop/apps")
+        let chosen = Sweep.scan(home: root, projectRoots: [apps], cancellation: Cancellation(), now: october).items
+        XCTAssertEqual(item("Desktop/apps/site/node_modules", in: chosen)?.title, "site/node_modules")
+        XCTAssertNil(item("Developer/web/node_modules", in: chosen), "Usual folders that were switched off are not searched")
+        XCTAssertEqual(Sweep.defaultProjectRoots(home: root).map(\.lastPathComponent), ["Developer"])
+    }
+
+    func testProjectRootMustBeInsideHomeAndOutsideLibrary() throws {
+        XCTAssertNoThrow(try Sweep.validateProjectRoot(try folder("Desktop/apps"), home: root))
+        XCTAssertThrowsError(try Sweep.validateProjectRoot(root, home: root), "The whole home folder is too broad")
+        XCTAssertThrowsError(try Sweep.validateProjectRoot(try folder("Library/Application Support/Thing"), home: root))
+        XCTAssertThrowsError(try Sweep.validateProjectRoot(try folder("Library"), home: root))
+        XCTAssertThrowsError(try Sweep.validateProjectRoot(try folder("Developer/web/node_modules"), home: root))
+        let elsewhere = try folder("elsewhere")
+        XCTAssertThrowsError(try Sweep.validateProjectRoot(elsewhere, home: root.appendingPathComponent("Desktop")))
+        try fm.createSymbolicLink(at: root.appendingPathComponent("Linked"), withDestinationURL: elsewhere)
+        XCTAssertThrowsError(try Sweep.validateProjectRoot(root.appendingPathComponent("Linked"), home: root))
+        XCTAssertThrowsError(try Sweep.validateProjectRoot(root.appendingPathComponent("Missing"), home: root))
+        XCTAssertThrowsError(try Sweep.validateProjectRoot(try folder(".nvm/versions/node"), home: root), "Hidden tool folders are not project folders")
+    }
+
+    func testRepositoryAtHomeDoesNotMakeBuildFoldersSafe() throws {
+        guard ["/Library/Developer/CommandLineTools/usr/bin/git", "/Applications/Xcode.app/Contents/Developer/usr/bin/git"].contains(where: fm.isExecutableFile(atPath:)) else { throw XCTSkip("git is not installed") }
+        try git(root, "init", "-q")
+        try file("Documents/work/Build/report.pdf")
+        let items = Sweep.scan(home: root, projectRoots: [root.appendingPathComponent("Documents")], cancellation: Cancellation(), now: october).items
+        XCTAssertEqual(item("Documents/work/Build", in: items)?.level, .review, "A dotfiles repository at home says nothing about other folders")
+    }
+
     func testNestedItemsAreNotOfferedTwice() throws {
         try file("Developer/app/package.json")
         try file("Developer/app/node_modules/pkg/node_modules/inner/a.js")
