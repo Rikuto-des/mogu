@@ -1,0 +1,348 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0671ABF50BCEDBC85C85F22C /* Cleanup.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2B81D81DE0F43AFD7B74616 /* Cleanup.swift */; };
+		0DE8BCED0FEAF335CC856D80 /* PixelUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98291C8E66EB00A006CCBA27 /* PixelUI.swift */; };
+		19489B2FD00BE081D3A100DF /* Safety.swift in Sources */ = {isa = PBXBuildFile; fileRef = B53C1341DF37C94B9293834C /* Safety.swift */; };
+		2269AF1B01452E24F0F8F38F /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 538344945AC96AE66AA0FBFA /* main.swift */; };
+		574627238160896A1A1B552C /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = D79406D5AE87C02366B253C4 /* PrivacyInfo.xcprivacy */; };
+		AC3F54409F492C75CC3E15F7 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E3A0A90955A34E5E5E9F6C6 /* AppModel.swift */; };
+		BB2938730F720E77B0C3E996 /* Views.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D0F4FACBC1CE92F125CB50F /* Views.swift */; };
+		CC2F573F9470A710A034EB2E /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = E88F4EBAFF6EDE29C979C2BC /* AppIcon.icns */; };
+		F9C3796F4DF5AF651C7CED99 /* Sweep.swift in Sources */ = {isa = PBXBuildFile; fileRef = A61C00E28A08E9BACD3080E2 /* Sweep.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		1A2AE66AC88301657C230B20 /* Mogu.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Mogu.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1E3A0A90955A34E5E5E9F6C6 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		538344945AC96AE66AA0FBFA /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		8D0F4FACBC1CE92F125CB50F /* Views.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views.swift; sourceTree = "<group>"; };
+		98291C8E66EB00A006CCBA27 /* PixelUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelUI.swift; sourceTree = "<group>"; };
+		A2B81D81DE0F43AFD7B74616 /* Cleanup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Cleanup.swift; sourceTree = "<group>"; };
+		A61C00E28A08E9BACD3080E2 /* Sweep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sweep.swift; sourceTree = "<group>"; };
+		B53C1341DF37C94B9293834C /* Safety.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Safety.swift; sourceTree = "<group>"; };
+		D79406D5AE87C02366B253C4 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		E88F4EBAFF6EDE29C979C2BC /* AppIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = AppIcon.icns; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		16447F81B72BC10F7B6C8936 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				1A2AE66AC88301657C230B20 /* Mogu.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		25667D4D88F8EDA614C8D91D /* MoguCore */ = {
+			isa = PBXGroup;
+			children = (
+				A2B81D81DE0F43AFD7B74616 /* Cleanup.swift */,
+				B53C1341DF37C94B9293834C /* Safety.swift */,
+				A61C00E28A08E9BACD3080E2 /* Sweep.swift */,
+			);
+			path = MoguCore;
+			sourceTree = "<group>";
+		};
+		B2AD26DD318DFFC4D8BAF03B /* Art */ = {
+			isa = PBXGroup;
+			children = (
+				E88F4EBAFF6EDE29C979C2BC /* AppIcon.icns */,
+			);
+			path = Art;
+			sourceTree = "<group>";
+		};
+		D437EB707A740764A4F3A1BB = {
+			isa = PBXGroup;
+			children = (
+				D79406D5AE87C02366B253C4 /* PrivacyInfo.xcprivacy */,
+				B2AD26DD318DFFC4D8BAF03B /* Art */,
+				E47E69F9B5D8B4ECFD4C09A3 /* Sources */,
+				16447F81B72BC10F7B6C8936 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		E47E69F9B5D8B4ECFD4C09A3 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				1E3A0A90955A34E5E5E9F6C6 /* AppModel.swift */,
+				538344945AC96AE66AA0FBFA /* main.swift */,
+				98291C8E66EB00A006CCBA27 /* PixelUI.swift */,
+				8D0F4FACBC1CE92F125CB50F /* Views.swift */,
+				25667D4D88F8EDA614C8D91D /* MoguCore */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		0AF1C350166965623A5100E7 /* Mogu */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7CA89F90A1F95C3AA28C3F97 /* Build configuration list for PBXNativeTarget "Mogu" */;
+			buildPhases = (
+				FFAD4CE07AC1E1F3E618156A /* Sources */,
+				D47226BCCBEEB6E07D633A5E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Mogu;
+			packageProductDependencies = (
+			);
+			productName = Mogu;
+			productReference = 1A2AE66AC88301657C230B20 /* Mogu.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		7CD7F04948082C6BA9613797 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					0AF1C350166965623A5100E7 = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 4EAA8340294C067024BD001E /* Build configuration list for PBXProject "Mogu" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = D437EB707A740764A4F3A1BB;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 16447F81B72BC10F7B6C8936 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				0AF1C350166965623A5100E7 /* Mogu */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		D47226BCCBEEB6E07D633A5E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CC2F573F9470A710A034EB2E /* AppIcon.icns in Resources */,
+				574627238160896A1A1B552C /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		FFAD4CE07AC1E1F3E618156A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AC3F54409F492C75CC3E15F7 /* AppModel.swift in Sources */,
+				0671ABF50BCEDBC85C85F22C /* Cleanup.swift in Sources */,
+				0DE8BCED0FEAF335CC856D80 /* PixelUI.swift in Sources */,
+				19489B2FD00BE081D3A100DF /* Safety.swift in Sources */,
+				F9C3796F4DF5AF651C7CED99 /* Sweep.swift in Sources */,
+				BB2938730F720E77B0C3E996 /* Views.swift in Sources */,
+				2269AF1B01452E24F0F8F38F /* main.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		15ADB5E7D4B4D1D252390BEC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_ENTITLEMENTS = Mogu.entitlements;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = jp.rikuto.mogu;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		B469667AC1F12A7A4B4D0D70 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_ENTITLEMENTS = Mogu.entitlements;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = jp.rikuto.mogu;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		BE6F487BEA02290581D316E2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_NAME = Mogu;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		E7908CCEB3D19379BCBDD3CF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_NAME = Mogu;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		4EAA8340294C067024BD001E /* Build configuration list for PBXProject "Mogu" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				15ADB5E7D4B4D1D252390BEC /* Debug */,
+				B469667AC1F12A7A4B4D0D70 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		7CA89F90A1F95C3AA28C3F97 /* Build configuration list for PBXNativeTarget "Mogu" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E7908CCEB3D19379BCBDD3CF /* Debug */,
+				BE6F487BEA02290581D316E2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 7CD7F04948082C6BA9613797 /* Project object */;
+}
